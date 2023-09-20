@@ -2,21 +2,9 @@ const mongoose = require('mongoose');
 
 //validate email
 var validateEmail = function (email) {
-    var re = /^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/;
+    var re = /^[a-zA-Z0-9._%+-]+@(?:[a-zA-Z0-9-]{1,63}\.)+[a-zA-Z]{2,63}$/;
     return re.test(email)
 };
-
-var EmailSchema = new Schema({
-    email: {
-        type: String,
-        trim: true,
-        lowercase: true,
-        unique: true,
-        required: 'Email address is required',
-        validate: [validateEmail, 'Hey fat fingers, this is not a fuckin email address'],
-        match: [/^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/, 'Hey fat fingers, this is not a fuckin email address']
-    }
-});
 
 //schema 
 const userSchema = new mongoose.Schema({
@@ -28,8 +16,20 @@ const userSchema = new mongoose.Schema({
             message: 'Invalid'
         }
     },
-    thoughts: { thoughtId: { type: mongoose.Schema.Types.ObjectId, ref: 'Thought' } },
-    friends: { userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User' } }
-});
+    thoughts: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Thought' }],
+    friends: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
+},
+    {
+        toJSON: {
+            virtuals: true,
+        },
+        id: false,
+    }
+);
 
-const handleError = (err) => console.error(err);
+//virtual 
+userSchema.virtual('friendCount').get(function () {
+    return this.friends.length;
+})
+const User = mongoose.model('user', userSchema);
+module.exports = User;
