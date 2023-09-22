@@ -8,10 +8,9 @@ const app = express();
 const User = require('./models/user');
 const Thought = require('./models/thought');
 
-app.use(express.json()); 
-
+app.use(express.json());
 app.use(express.urlencoded({
-    extended: true,
+    extended: false
 }
 ));
 
@@ -41,7 +40,8 @@ app.get('/api/users/:userId', async (req, res) => {
 
 //POST a new user
 app.post('/api/users', async (req, res) => {
-    console.log(req.body); 
+    console.log('test');
+    console.log(req.body);
     try {
         var user = await User.create(req.body);
         res.status(200).send("user created successfully: " + user._id);
@@ -84,7 +84,8 @@ app.delete('/api/users/:userId', async (req, res) => {
 
         //BONUS delete users thoughts on delete:user CASCADE
         //await Thought.deleteMany({ userId: req.params.userId });
-
+        //ADD MORE DESCRIPOTVIVE for deletion success. 
+        res.status(200).json(deleteUser);
     } catch (err) {
         res.status(500).send({ message: err })
     }
