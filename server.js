@@ -11,7 +11,6 @@ const Thought = require('./models/thought');
 app.use(express.urlencoded({extended: false}));
 app.use(express.json());
 
-//GETS and PUTS and shit go here. 
 //api/users = GET all users
 app.get('/api/users', async (req, res) => {
     try {
@@ -81,7 +80,7 @@ app.delete('/api/users/:userId', async (req, res) => {
 
         //BONUS delete users thoughts on delete:user CASCADE
         //await Thought.deleteMany({ userId: req.params.userId });
-        //ADD MORE DESCRIPOTVIVE for deletion success. 
+       
         res.status(200).json(deleteUser);
     } catch (err) {
         res.status(500).send({ message: err })
