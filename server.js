@@ -1,4 +1,4 @@
-const mongoose = require('mongoose');
+// const mongoose = require('mongoose');
 // const mondoDB = require('mongoDB'); 
 const express = require('express');
 const db = require('./config/connection');
@@ -8,11 +8,8 @@ const app = express();
 const User = require('./models/user');
 const Thought = require('./models/thought');
 
+app.use(express.urlencoded({extended: false}));
 app.use(express.json());
-app.use(express.urlencoded({
-    extended: false
-}
-));
 
 //GETS and PUTS and shit go here. 
 //api/users = GET all users
@@ -94,8 +91,10 @@ app.delete('/api/users/:userId', async (req, res) => {
 
 
 app.post('/api/users/:userId/friends/:friendId', async (req, res) => {
+
+    const exampleURL = "localholst1111/api/users/potatoe/friends/678910"
     try {
-        const userId = req.params.userId;
+        const userId = req.params.userId;//12345
         const friendId = req.params.friendId;
 
         //find user by id
@@ -166,28 +165,19 @@ app.get('/api/thoughts/:thoughtId', async (req, res) => {
 
 app.post('/api/thoughts', async (req, res) => {
     try {
-        const { thoughtText, username } = req.body;
-
-        //find the user
-        const user = await User.findOne(
-            { username: username }
-        );
-
-        if (!user) {
-            return res.status(404).json({ message: "nO here!" })
-        }
-
         //create thought
         const thought = await Thought.create(req.body);
 
-        //Not sure if this works here, but i just think its neat. 
-        // DOESNT WORK: user.FindOneAndUpdate 
-        user.thoughts.push(thought._id);
-        await user.save();
+        const user = await User.findOneAndUpdate(
+            {_id: req.body.userId},
+            { $push: { thoughts: thought._id } },
+            { new: true }
+        )
 
         //respond with created thought
-        res.status(201).json(thought);
+        res.status(201).json(user);
     } catch (err) {
+        console.log(err)
         res.status(500).send({ message: err })
     }
 
@@ -237,25 +227,13 @@ app.post('/api/thoughts/:thoughtId/reactions', async (req, res) => {
     try {
         //create reaction stored in thoughts reactions array
         const thoughtId = req.params.thoughtId;
-        const { reactionText, username } = req.body;
+        const thought = await Thought.findOneAndUpdate(
+            {_id: thoughtId}, 
+            {$push: {reactions: req.body}}, 
+            {new: true}
+        )
 
-        //find thought by id
-        const thought = await Thought.findById(thoughtId);
-
-        //create a new reaction object
-        const newReaction = {
-            reactionText,
-            username,
-        };
-
-        //push new reaction
-        thought.reactions.push(newReaction);
-
-        //save
-        await thought.save();
-
-        //respond with updated thought
-        res.status(201).json(thought);
+        res.json(thought)
 
     } catch (err) {
         res.status(500).send({ message: err })
@@ -265,34 +243,15 @@ app.post('/api/thoughts/:thoughtId/reactions', async (req, res) => {
 
 app.delete('/api/thoughts/:thoughtId/reactions/:reactionId', async (req, res) => {
     try {
-        //delete reaction by Id
-        const reactionId = req.params.reactionId;
-        const thoughtId = req.params.thoughtId;
+       //create reaction stored in thoughts reactions array
+       const thoughtId = req.params.thoughtId;
+       const thought = await Thought.findOneAndUpdate(
+           {_id: thoughtId}, 
+           {$pull: {reactions: {reactionID: req.params.reactionId}}}, 
+           {new: true}
+       )
 
-        const thought = await Thought.findById(thoughtId);
-        if (!thought) {
-            return res.status(404).json({ Message: "No THOTS here!" })
-        };
-
-        thought.reactions.id(reactionId).deleteOne();
-        // const t = await .findByIdAndDelete(
-        //     { _id: thoughtId },
-        //     { $pull: { reactions : req.params.videoId } },
-        //     { new: true }
-        //   );
-        // for (i = 0; i< thought.reactions.length; i++){
-        //     var thisReact = thought.reactions[i];
-        //     if (thisReact.reactionId == reactionId){
-        //         thought.reactions.pull(thisReact);
-        //         break;
-        //     }
-        // }
-
-        //save
-        await thought.save();
-        // respond 
-        res.status(204).end();
-
+       res.json(thought)
     } catch (err) {
         res.status(500).send({ message: err })
     }
@@ -308,8 +267,7 @@ app.delete('/api/thoughts/:thoughtId/reactions/:reactionId', async (req, res) =>
 db.once('open', () => {
     app.listen(3001, () => {
         console.log("API is watching you");
+        console.log("yay!");
     });
 });
 
-
-console.log("yay!");
